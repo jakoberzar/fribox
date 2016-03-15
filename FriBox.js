@@ -38,13 +38,13 @@ function posredujStaticnoVsebino(odgovor, absolutnaPotDoDatoteke, mimeType) {
             if (datotekaObstaja) {
                 fs.readFile(absolutnaPotDoDatoteke, function(napaka, datotekaVsebina) {
                     if (napaka) {
-                        //Posreduj napako
+                        vrni500(odgovor);
                     } else {
                         posredujDatoteko(odgovor, absolutnaPotDoDatoteke, datotekaVsebina, mimeType);
                     }
                 })
             } else {
-                //Posreduj napako
+                vrni404(odgovor);
             }
         })
 }
@@ -63,10 +63,10 @@ function posredujSeznamDatotek(odgovor) {
     odgovor.writeHead(200, {'Content-Type': 'application/json'});
     fs.readdir(dataDir, function(napaka, datoteke) {
         if (napaka) {
-            //Posreduj napako
+            vrni500(odgovor);
         } else {
             var rezultat = [];
-            for (var i=0; i<datoteke.length; i++) {
+            for (var i = 0; i < datoteke.length; i++) {
                 var datoteka = datoteke[i];
                 var velikost = fs.statSync(dataDir+datoteka).size;    
                 rezultat.push({datoteka: datoteka, velikost: velikost});
@@ -88,12 +88,44 @@ function naloziDatoteko(zahteva, odgovor) {
     form.on('end', function(fields, files) {
         var zacasnaPot = this.openedFiles[0].path;
         var datoteka = this.openedFiles[0].name;
-        fs.copy(zacasnaPot, dataDir + datoteka, function(napaka) {  
-            if (napaka) {
-                //Posreduj napako
+        fs.exists(dataDir + datoteka, function(obstaja) {
+            if (obstaja) {
+                odgovor.writeHead(409);
+                odgovor.write("Already exists!!!");
+                odgovor.end();
             } else {
-                posredujOsnovnoStran(odgovor);        
+                fs.copy(zacasnaPot, dataDir + datoteka, function(napaka) {  
+                    if (napaka) {
+                        vrni404(odgovor);
+                    } else {
+                        posredujOsnovnoStran(odgovor);        
+                    }
+                });
             }
-        });
+        })
+    });
+}
+
+function vrni404(odgovor) {
+    odgovor.writeHead(404);
+    odgovor.write("Not found!!!");
+    odgovor.end();
+}
+
+function vrni500(odgovor) {
+    odgovor.writeHead(500);
+    odgovor.write("Internal server error!!!");
+    odgovor.end();
+}
+
+function izbrisiDatoteko(odgovor, potDoDatoteke) {
+    fs.unlink(potDoDatoteke, function(napaka) {
+        if (napaka) {
+            vrni500(odgovor);
+        } else {
+            odgovor.writeHead(200);
+            odgovor.write("Datoteka izbrisana");
+            odgovor.end();
+        }
     });
 }
