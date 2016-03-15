@@ -19,13 +19,15 @@ var streznik = http.createServer(function(zahteva, odgovor) {
    } else if (zahteva.url.startsWith('/brisi')) { 
        izbrisiDatoteko(odgovor, dataDir + zahteva.url.replace("/brisi", ""));
    } else if (zahteva.url.startsWith('/prenesi')) { 
-       posredujStaticnoVsebino(odgovor, dataDir + zahteva.url.replace("/prenesi", ""), "application/octet-stream");
+       posredujDatoteko(odgovor, dataDir + zahteva.url.replace("/prenesi", ""), "application/octet-stream");
    } else if (zahteva.url == "/nalozi") {
        naloziDatoteko(zahteva, odgovor);
+   } else if (zahteva.url.startsWith("/poglej")) {
+       posredujStaticnoVsebino(odgovor, dataDir + zahteva.url.replace("/poglej/", ""));
    } else {
        posredujStaticnoVsebino(odgovor, './public' + zahteva.url, "");
    }
-});
+}).listen(process.env.PORT);
 
 function posredujOsnovnoStran(odgovor) {
     posredujStaticnoVsebino(odgovor, './public/fribox.html', "");
